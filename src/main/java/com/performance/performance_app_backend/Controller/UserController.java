@@ -2,13 +2,17 @@ package com.performance.performance_app_backend.Controller;
 
 import com.performance.performance_app_backend.Entity.User;
 import com.performance.performance_app_backend.Service.UserService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map; // Import this
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin("*") // allow frontend to call it
+@CrossOrigin("*")
 public class UserController {
 
     private final UserService service;
@@ -17,10 +21,13 @@ public class UserController {
         this.service = service;
     }
 
-    // GET all users
+    // GET all users - UPDATED HERE
     @GetMapping
-    public List<User> getAll() {
-        return service.getAll();
+    public Map<String, List<User>> getAll() {
+// Import java.util.Map;
+        Map<String, List<User>> response = new HashMap<>();
+        response.put("data", service.getAll());
+        return response;
     }
 
     // GET a user by ID
@@ -35,6 +42,17 @@ public class UserController {
         return service.create(user);
     }
 
+    // 👇 NEW: EXCEPTION HANDLER METHOD
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST) // Sets HTTP Status to 400
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        // Set the error key to the exception message
+        errorResponse.put("error", ex.getMessage());
+
+        // Return a ResponseEntity with the error body and 400 status
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
     // UPDATE user
     @PutMapping("/{id}")
     public User update(@PathVariable Long id, @RequestBody User user) {

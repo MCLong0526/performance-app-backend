@@ -24,6 +24,23 @@ public class UserService {
     }
 
     public User create(User user) {
+        if(user.getId() != null && repo.existsById(user.getId())) {
+            throw new IllegalArgumentException("User with ID " + user.getId() + " already exists.");
+        }
+
+        // 👇 UPDATED CHECK: Check for null OR empty/blank strings
+        if (user.getName() == null || user.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be empty.");
+        }
+
+        if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+            throw new IllegalArgumentException("Email cannot be empty.");
+        }
+
+        if(user.getRole() == null) {
+            user.setRole("USER");
+        }
+
         return repo.save(user);
     }
 
