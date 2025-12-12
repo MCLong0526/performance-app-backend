@@ -49,6 +49,16 @@ public class UserService {
                 .orElse(null);
     }
 
+    // Helper to get current authenticated user's name
+    private String getCurrentUserName() {
+        var authentication = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof User) {
+            return ((User) authentication.getPrincipal()).getName();
+        }
+        return "SYSTEM_OR_ADMIN";
+    }
+
     public User create(User user) {
         if (user.getName() == null || user.getName().trim().isEmpty()) {
             throw new IllegalArgumentException("Name cannot be empty.");
@@ -56,19 +66,31 @@ public class UserService {
         if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
             throw new IllegalArgumentException("Email cannot be empty.");
         }
+        // Strict password check removed for now as per previous context, but keeping it
+        // per current file state unless instructed otherwise.
+        // Wait, the user moved away from email flow back to this. So I should keep
+        // password check or follow existing logic.
+        // The user request was specific about audit fields. I will stick to existing
+        // logic for password but update audit.
         if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
             throw new IllegalArgumentException("Password cannot be empty.");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        if(user.getRole() == null) {
+        if (user.getRole() == null) {
             user.setRole(Role.PROGRAMMER);
         }
-        if(user.getStatus() == null) {
+        if (user.getStatus() == null) {
             user.setStatus(UserStatus.ACTIVE);
         }
-        if(user.getCreatedBy() == null || user.getCreatedBy().trim().isEmpty()) {
-            user.setCreatedBy("SYSTEM_OR_ADMIN");
+
+        // Dynamic Audit Field
+        String currentUserName = getCurrentUserName();
+        if ("SYSTEM_OR_ADMIN".equals(currentUserName) && "SELF_REGISTER".equals(user.getCreatedBy())) {
+            // Keep SELF_REGISTER if it was explicitly passed and we are anonymous
+        } else {
+            user.setCreatedBy(currentUserName);
         }
+
         user.setCreateTime(LocalDateTime.now());
         user.setDeleted(false);
         return repo.save(user);
@@ -87,7 +109,10 @@ public class UserService {
                     if (newData.getPassword() != null && !newData.getPassword().trim().isEmpty()) {
                         u.setPassword(passwordEncoder.encode(newData.getPassword()));
                     }
-                    u.setUpdatedBy("SYSTEM_OR_ADMIN_UPDATER");
+
+                    // Dynamic Audit Field
+                    u.setUpdatedBy(getCurrentUserName());
+
                     u.setUpdateTime(LocalDateTime.now());
                     return repo.save(u);
                 })
@@ -100,7 +125,10 @@ public class UserService {
         if (userOpt.isPresent() && !userOpt.get().isDeleted()) {
             User user = userOpt.get();
             user.setDeleted(true);
-            user.setUpdatedBy("SYSTEM_OR_ADMIN_DELETER");
+
+            // Dynamic Audit Field
+            user.setUpdatedBy(getCurrentUserName());
+
             user.setUpdateTime(LocalDateTime.now());
             repo.save(user);
             return true;

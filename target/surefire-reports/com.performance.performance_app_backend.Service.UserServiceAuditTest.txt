@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.performance.performance_app_backend.Service.UserServiceAuditTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.476 s -- in com.performance.performance_app_backend.Service.UserServiceAuditTest

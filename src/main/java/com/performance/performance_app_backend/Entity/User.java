@@ -11,6 +11,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 import java.time.LocalDateTime;
@@ -57,9 +59,15 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private boolean isDeleted = false;
 
+    @Column(nullable = false)
+    private int annualLeaveEntitlement = 14; // Default to 14 days
+
+    @Column(nullable = false)
+    private BigDecimal annualLeaveUsed = BigDecimal.ZERO; // Default to 0.00 days
+
     // NEW FIELD: Password - Use @JsonIgnore to hide it from serialized API responses
     // We keep @JsonProperty(access = JsonProperty.Access.WRITE_ONLY) if it's used for incoming JSON
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     public User() {
@@ -174,5 +182,21 @@ public class User implements UserDetails {
     // Note: The getter/setter for password should stay, but Spring Security uses the @Override getPassword()
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public int getAnnualLeaveEntitlement() {
+        return annualLeaveEntitlement;
+    }
+
+    public void setAnnualLeaveEntitlement(int annualLeaveEntitlement) {
+        this.annualLeaveEntitlement = annualLeaveEntitlement;
+    }
+
+    public BigDecimal getAnnualLeaveUsed() {
+        return annualLeaveUsed;
+    }
+
+    public void setAnnualLeaveUsed(BigDecimal annualLeaveUsed) {
+        this.annualLeaveUsed = annualLeaveUsed;
     }
 }
